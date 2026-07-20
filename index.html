@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klassik Radio Player</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .player-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .station-name {
+            color: #667eea;
+            font-size: 14px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .now-playing {
+            background: linear-gradient(135deg, #f5f7fa 0%, #ecf0f1 100%);
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .now-playing-label {
+            color: #999;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .track-info {
+            margin-bottom: 12px;
+        }
+
+        .now-playing-title {
+            color: #333;
+            font-size: 19px;
+            font-weight: 700;
+            word-wrap: break-word;
+            line-height: 1.3;
+            margin-bottom: 10px;
+            min-height: 28px;
+        }
+
+        .now-playing-composer {
+            color: #667eea;
+            font-size: 14px;
+            font-weight: 600;
+            word-wrap: break-word;
+            min-height: 20px;
+        }
+
+        .now-playing-artist {
+            color: #7f8c8d;
+            font-size: 13px;
+            margin-top: 10px;
+            font-style: italic;
+            min-height: 20px;
+        }
+
+        .buffer-info {
+            margin-top: 12px;
+            font-size: 13px;
+        }
+
+        .buffer-bar {
+            width: 100%;
+            height: 8px;
+            background: #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .buffer-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .buffer-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #555;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 15px 40px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #playBtn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+        }
+
+        #playBtn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        #stopBtn {
+            background: #e74c3c;
+            color: white;
+            flex: 1;
+        }
+
+        #stopBtn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(231, 76, 60, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status {
+            color: #667eea;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .status.playing {
+            color: #27ae60;
+        }
+
+        .status.stopped {
+            color: #e74c3c;
+        }
+
+        .status.buffering {
+            color: #f39c12;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .settings {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .settings summary {
+            cursor: pointer;
+            color: #555;
+            font-size: 13px;
+            font-weight: 600;
+            user-select: none;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .settings summary::before {
+            content: "▶";
+            font-size: 10px;
+            transition: transform 0.2s;
+        }
+
+        .settings[open] summary::before {
+            transform: rotate(90deg);
+        }
+
+        .settings .setting-item {
+            margin-top: 12px;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .setting-item label {
+            color: #555;
+            font-weight: 500;
+        }
+
+        .setting-item select,
+        .setting-item input {
+            padding: 5px 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+
+        .error-message {
+            background: #fadbd8;
+            color: #c0392b;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 13px;
+        }
+
+        .metadata-source {
+            font-size: 11px;
+            color: #999;
+            margin-top: 8px;
+        }
+
+        .track-content {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .cover-art {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: #ddd;
+        }
+
+        .track-info {
+            flex: 1;
+            min-width: 150px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="player-container">
+        <h1>🎵 Radio Player</h1>
+        <p class="station-name">Klassik Radio - New Classics</p>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="now-playing">
+            <div class="now-playing-label">Now Playing</div>
+            <div class="track-content">
+                <img id="coverArt" class="cover-art" src="" alt="" style="display:none;">
+                <div class="track-info">
+                    <div class="now-playing-title" id="trackTitle">⏳ Loading...</div>
+                    <div class="now-playing-composer" id="trackComposer"></div>
+                    <div class="now-playing-artist" id="trackArtist"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="playBtn" onclick="playStream()">▶ Play</button>
+            <button id="stopBtn" onclick="stopStream()" disabled>⏹ Stop</button>
+        </div>
+
+        <div class="status stopped" id="status">
+            <span>⚪ Stopped</span>
+        </div>
+
+        <details class="settings">
+            <summary>Settings</summary>
+            <div class="setting-item">
+                <label for="volume">Volume:</label>
+                <input type="range" id="volume" min="0" max="100" value="100" onchange="setVolume(this.value)">
+            </div>
+            <div class="buffer-info" id="bufferInfo">
+                <div class="buffer-bar">
+                    <div class="buffer-fill" id="bufferFill"></div>
+                </div>
+                <div class="buffer-text">
+                    <span>Buffered: <strong id="bufferAmount">0s</strong></span>
+                    <span>Network: <strong id="networkStatus">Idle</strong></span>
+                </div>
+            </div>
+        </details>
+    </div>
+
+    <audio id="radioStream"></audio>
+
+    <script>
+        const streamUrl = "https://stream.klassikradio.de/newclassics/aac-128/konsoleplayer";
+        const streamUrlMp3 = "https://stream.klassikradio.de/newclassics/mp3-128/konsoleplayer";
+        const metadataUrl = "https://api.streamabc.net/metadata/channel/klassikr-newclassics.json";
+        const audio = document.getElementById("radioStream");
+        const playBtn = document.getElementById("playBtn");
+        const stopBtn = document.getElementById("stopBtn");
+        const statusDiv = document.getElementById("status");
+        const trackTitle = document.getElementById("trackTitle");
+        const trackComposer = document.getElementById("trackComposer");
+        const trackArtist = document.getElementById("trackArtist");
+        const coverArt = document.getElementById("coverArt");
+        const bufferFill = document.getElementById("bufferFill");
+        const bufferAmount = document.getElementById("bufferAmount");
+        const networkStatus = document.getElementById("networkStatus");
+        const errorMessage = document.getElementById("errorMessage");
+
+        let isPlaying = false;
+        let isBuffering = false;
+        let reconnectAttempts = 0;
+        let maxReconnectAttempts = 5;
+        let metadataTimeout;
+        let bufferPollInterval;
+        let lastMetadata = {};
+        let lastCurrentTime = 0;
+
+        // Audio event listeners
+        audio.addEventListener("play", () => {
+            console.log("Audio started playing");
+            isBuffering = false;
+            updateUI();
+        });
+
+        audio.addEventListener("playing", () => {
+            console.log("Audio playing");
+            isBuffering = false;
+            updateUI();
+        });
+
+        audio.addEventListener("loadstart", () => {
+            console.log("Loading stream...");
+            isBuffering = true;
+            networkStatus.textContent = "Loading...";
+            updateUI();
+        });
+
+        audio.addEventListener("progress", () => {
+            updateBufferUI();
+        });
+
+        audio.addEventListener("canplay", () => {
+            console.log("Can play");
+            isBuffering = false;
+            networkStatus.textContent = "Connected";
+            reconnectAttempts = 0;
+            updateUI();
+        });
+
+        audio.addEventListener("stalled", () => {
+            console.log("Playback stalled");
+            isBuffering = true;
+            networkStatus.textContent = "Buffering...";
+            updateUI();
+        });
+
+        audio.addEventListener("ended", () => {
+            console.log("Stream ended");
+            if (isPlaying) {
+                reconnectStream();
+            }
+        });
+
+        audio.addEventListener("error", (e) => {
+            if (!isPlaying) return;
+            console.error("Audio error:", audio.error?.message);
+            showError("Stream connection error. Retrying...");
+            if (isPlaying) {
+                reconnectStream();
+            }
+        });
+
+        function getStreamUrl() {
+            const a = document.createElement("audio");
+            const aacSupport = a.canPlayType("audio/aac") || a.canPlayType("audio/mp4; codecs=mp4a.40.2");
+            const base = aacSupport !== "" ? streamUrl : streamUrlMp3;
+            return base + "?_=" + Date.now();
+        }
+
+        function playStream() {
+            hideError();
+            console.log("Starting stream");
+            audio.crossOrigin = "anonymous";
+            audio.src = getStreamUrl();
+
+            audio.addEventListener("canplay", function onCanPlay() {
+                audio.removeEventListener("canplay", onCanPlay);
+                audio.play().catch(err => {
+                    console.error("Play error:", err);
+                    showError("Failed to play stream");
+                });
+            });
+
+            audio.load();
+            isPlaying = true;
+            bufferPollInterval = setInterval(updateBufferUI, 500);
+            updateUI();
+            fetchMetadata();
+        }
+
+        function stopStream() {
+            audio.pause();
+            audio.src = "";
+            isPlaying = false;
+            isBuffering = false;
+            reconnectAttempts = 0;
+            updateUI();
+            clearTimeout(metadataTimeout);
+            clearInterval(bufferPollInterval);
+            lastCurrentTime = 0;
+            trackTitle.textContent = "Not playing";
+            trackComposer.textContent = "";
+            trackArtist.textContent = "";
+            coverArt.style.display = "none";
+            lastMetadata = {};
+            bufferFill.style.width = "0%";
+            bufferAmount.textContent = "0s";
+            networkStatus.textContent = "Idle";
+        }
+
+        function reconnectStream() {
+            reconnectAttempts++;
+            if (reconnectAttempts > maxReconnectAttempts) {
+                showError("Max reconnection attempts reached");
+                stopStream();
+                return;
+            }
+            
+            console.log("Reconnecting... Attempt " + reconnectAttempts);
+            networkStatus.textContent = `Reconnecting (${reconnectAttempts}/${maxReconnectAttempts})...`;
+            
+            setTimeout(() => {
+                if (isPlaying) {
+                    audio.src = getStreamUrl();
+                    audio.load();
+                    audio.play().catch(err => console.error("Reconnect error:", err));
+                }
+            }, 2000 * reconnectAttempts);
+        }
+
+        function getBufferedSeconds() {
+            if (audio.buffered.length === 0) return 0;
+            const bufferedEnd = audio.buffered.end(audio.buffered.length - 1);
+            return Math.max(0, bufferedEnd - audio.currentTime);
+        }
+
+        function updateBufferUI() {
+            // Detect playback via advancing currentTime for browsers that skip events
+            if (isPlaying && isBuffering && audio.currentTime > lastCurrentTime) {
+                isBuffering = false;
+                networkStatus.textContent = "Connected";
+                reconnectAttempts = 0;
+                updateUI();
+            }
+            lastCurrentTime = audio.currentTime;
+
+            const seconds = getBufferedSeconds();
+            const pct = Math.min(seconds * 10, 100);
+            bufferFill.style.width = pct.toFixed(2) + "%";
+            bufferAmount.textContent = seconds.toFixed(2) + "s";
+        }
+
+
+        function updateUI() {
+            if (isPlaying) {
+                if (isBuffering) {
+                    playBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    statusDiv.innerHTML = '<span class="spinner"></span> Buffering...';
+                    statusDiv.className = "status buffering";
+                } else {
+                    playBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    statusDiv.textContent = "🔴 Playing";
+                    statusDiv.className = "status playing";
+                }
+            } else {
+                playBtn.disabled = false;
+                stopBtn.disabled = true;
+                statusDiv.innerHTML = '⚪ Stopped';
+                statusDiv.className = "status stopped";
+            }
+        }
+
+        function fetchMetadata() {
+            if (!isPlaying) return;
+
+            fetch(metadataUrl)
+                .then(r => r.json())
+                .then(data => {
+                    const song = data.song || "";
+                    const artist = data.artist || "";
+                    const album = data.extdata?.album || data.album || "";
+                    const cover = data.images?.medium?.url || data.cover || "";
+                    const title = song.split(";")[0].trim();
+
+                    if (title && title !== lastMetadata.title) {
+                        updateMetadata(title, artist, album, cover);
+                    }
+
+                    // Schedule next fetch just after this track ends.
+                    // start_timestamp + duration gives the end time in Unix seconds.
+                    const now = Date.now() / 1000;
+                    const endsAt = (data.start_timestamp || 0) + (data.duration || 0);
+                    const msUntilEnd = Math.max(0, endsAt - now) * 1000;
+                    // Add 500ms so the API has time to update, cap fallback at 10s.
+                    const delay = msUntilEnd > 0 ? msUntilEnd + 500 : 10000;
+
+                    clearTimeout(metadataTimeout);
+                    metadataTimeout = setTimeout(fetchMetadata, delay);
+                })
+                .catch(err => {
+                    console.log("Metadata fetch failed:", err);
+                    // Retry in 5s on error
+                    clearTimeout(metadataTimeout);
+                    metadataTimeout = setTimeout(fetchMetadata, 5000);
+                });
+        }
+
+        function updateMetadata(title, artist, album, cover) {
+            trackTitle.textContent = title || "Unknown Title";
+            trackComposer.textContent = artist ? `🎼 ${artist}` : "";
+            trackArtist.textContent = album ? `💿 ${album}` : "";
+
+            if (cover) {
+                coverArt.src = cover;
+                coverArt.style.display = "block";
+            } else {
+                coverArt.style.display = "none";
+            }
+
+            lastMetadata = { title, artist, album };
+            console.log("Updated metadata:", lastMetadata);
+        }
+
+        function setVolume(value) {
+            audio.volume = value / 100;
+        }
+
+        function showError(message) {
+            errorMessage.textContent = "⚠️ " + message;
+            errorMessage.style.display = "block";
+        }
+
+        function hideError() {
+            errorMessage.style.display = "none";
+        }
+
+        // Initialize
+        updateUI();
+        audio.volume = 1;
+    </script>
+</body>
+</html>
